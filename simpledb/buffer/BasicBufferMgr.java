@@ -11,7 +11,7 @@ import simpledb.file.*;
  *
  */
 class BasicBufferMgr {
-   private Buffer[] bufferpool;	//TODO: Comment
+   private Buffer[] bufferpool;	//TODO: Make a queue of unallocated buffers
    //Map of allocated buffers, keyed on the blocks they contain
    private Map<Block,Buffer> bufferpoolMap;
    private int numAvailable;
@@ -30,7 +30,7 @@ class BasicBufferMgr {
     * @param numbuffs the number of buffer slots to allocate
     */
    BasicBufferMgr(int numbuffs) {
-      bufferpool = new Buffer[numbuffs];	//TODO: Comment
+      bufferpool = new Buffer[numbuffs];
       //Initialize the Map
       bufferpoolMap = new HashMap<Block,Buffer>();
       numAvailable = numbuffs;
@@ -43,9 +43,16 @@ class BasicBufferMgr {
     * @param txnum the transaction's id number
     */
    synchronized void flushAll(int txnum) {
-      for (Buffer buff : bufferpool)
+      
+	   /*for (Buffer buff : bufferpool)
          if (buff.isModifiedBy(txnum))
-         buff.flush();
+         buff.flush();*/
+      
+	   //Flush all allocated buffers. Hence iterate through values in map.
+      for(Buffer buff : bufferpoolMap.values()) {
+    	  if (buff.isModifiedBy(txnum))
+    	         buff.flush();
+      }
    }
    
    /**
