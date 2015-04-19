@@ -1,5 +1,8 @@
 package simpledb.buffer;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import simpledb.file.*;
 
 /**
@@ -8,7 +11,9 @@ import simpledb.file.*;
  *
  */
 class BasicBufferMgr {
-   private Buffer[] bufferpool;
+   private Buffer[] bufferpool;	//TODO: Comment
+   //Map of allocated buffers, keyed on the blocks they contain
+   private Map<Block,Buffer> bufferpoolMap;
    private int numAvailable;
    
    /**
@@ -25,7 +30,9 @@ class BasicBufferMgr {
     * @param numbuffs the number of buffer slots to allocate
     */
    BasicBufferMgr(int numbuffs) {
-      bufferpool = new Buffer[numbuffs];
+      bufferpool = new Buffer[numbuffs];	//TODO: Comment
+      //Initialize the Map
+      bufferpoolMap = new HashMap<Block,Buffer>();
       numAvailable = numbuffs;
       for (int i=0; i<numbuffs; i++)
          bufferpool[i] = new Buffer();
@@ -102,12 +109,16 @@ class BasicBufferMgr {
    }
    
    private Buffer findExistingBuffer(Block blk) {
-      for (Buffer buff : bufferpool) {
+      /*for (Buffer buff : bufferpool) {
          Block b = buff.block();
          if (b != null && b.equals(blk))
             return buff;
       }
       return null;
+      */
+	  //Return the buffer for the block if mapping exists
+	  //Else return null
+	  return bufferpoolMap.get(blk);
    }
    
    private Buffer chooseUnpinnedBuffer() {
