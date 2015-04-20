@@ -3,3 +3,4 @@
 3.	Client code?
 4.	Remove .classpath from repo
 5.	Everything else the project requires.
+6.	Enable running project from Eclipse
