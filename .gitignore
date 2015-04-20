@@ -1,0 +1,7 @@
+# keep these folders away
+# /target
+# /.settings
+
+# keep these files away (please build them yourself)
+.class
+# .classpath

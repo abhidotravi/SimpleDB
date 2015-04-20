@@ -1,0 +1,5 @@
+1.	Remove .settings and update .gitignore
+2.	Maven project
+3.	Client code?
+4.	Remove .classpath from repo
+5.	Everything else the project requires.
