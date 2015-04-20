@@ -3,5 +3,5 @@
 # /.settings
 
 # keep these files away (please build them yourself)
-.class
+*.class
 # .classpath
