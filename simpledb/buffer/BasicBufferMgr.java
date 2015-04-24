@@ -1,7 +1,11 @@
 package simpledb.buffer;
 
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import simpledb.file.*;
 
@@ -11,7 +15,8 @@ import simpledb.file.*;
  *
  */
 class BasicBufferMgr {
-   private Buffer[] bufferpool;	//TODO: Make a queue of unallocated buffers
+   private Buffer[] bufferpool;	//A pool of Unallocated buffers
+   
    //Map of allocated buffers, keyed on the blocks they contain
    private Map<Block,Buffer> bufferpoolMap;
    private int numAvailable;
@@ -33,9 +38,12 @@ class BasicBufferMgr {
       bufferpool = new Buffer[numbuffs];
       //Initialize the Map
       bufferpoolMap = new HashMap<Block,Buffer>();
+      
       numAvailable = numbuffs;
-      for (int i=0; i<numbuffs; i++)
-         bufferpool[i] = new Buffer();
+      for (int i=0; i<numbuffs; i++) {
+    	  bufferpool[i] = new Buffer();
+      }
+         
    }
    
    /**
@@ -50,8 +58,11 @@ class BasicBufferMgr {
       
 	   //Flush all allocated buffers. Hence iterate through values in map.
       for(Buffer buff : bufferpoolMap.values()) {
-    	  if (buff.isModifiedBy(txnum))
-    	         buff.flush();
+    	  if (buff.isModifiedBy(txnum)) {
+    		  System.out.println("DEBUG: Flushing Buffer with block: "+buff.block());
+    		  buff.flush();
+    	  }
+    	        
       }
    }
    
@@ -65,12 +76,25 @@ class BasicBufferMgr {
     * @return the pinned buffer
     */
    synchronized Buffer pin(Block blk) {
+	  
+	  System.out.println("DEBUG: BasicBufferManager - pin");
       Buffer buff = findExistingBuffer(blk);
       if (buff == null) {
          buff = chooseUnpinnedBuffer();
          if (buff == null)
             return null;
          buff.assignToBlock(blk);
+         
+         //Get currently assigned block, null if unallocated
+         Block oldBlock = getExistingBlockForBuffer(buff);
+         
+         if(oldBlock == null) {
+        	 //If unallocated allocate now
+        	 bufferpoolMap.put(blk, buff);
+         } else {
+        	 //Update the map with new mapping
+        	 updateMap(oldBlock);
+         }
       }
       if (!buff.isPinned())
          numAvailable--;
@@ -78,7 +102,8 @@ class BasicBufferMgr {
       return buff;
    }
    
-   /**
+
+/**
     * Allocates a new block in the specified file, and
     * pins a buffer to it. 
     * Returns null (without allocating the block) if 
@@ -88,10 +113,24 @@ class BasicBufferMgr {
     * @return the pinned buffer
     */
    synchronized Buffer pinNew(String filename, PageFormatter fmtr) {
+	   
+	  System.out.println("DEBUG: BasicBufferManager - pinNew");
       Buffer buff = chooseUnpinnedBuffer();
       if (buff == null)
          return null;
       buff.assignToNew(filename, fmtr);
+      
+      //Get currently assigned block, null if unallocated
+      Block oldBlock = getExistingBlockForBuffer(buff);
+      
+      if(oldBlock == null) {
+     	 //If buffer unallocated, allocate now
+     	 bufferpoolMap.put(buff.block(), buff);
+      } else {
+     	 //Update the map with new mapping
+     	 updateMap(oldBlock);
+      }
+   
       numAvailable--;
       buff.pin();
       return buff;
@@ -123,9 +162,16 @@ class BasicBufferMgr {
       }
       return null;
       */
-	  //Return the buffer for the block if mapping exists
-	  //Else return null
-	  return bufferpoolMap.get(blk);
+
+	   try {
+		   System.out.println("DEBUG: FindExistingBuffer value "+bufferpoolMap.get(blk));
+	   }catch(NullPointerException e) {
+		   System.out.println("DEBUG: FindExistingBuffer value is null"); 
+	   }
+	   
+	   //Return the buffer for the block if mapping exists
+	   //Else return null
+	   return bufferpoolMap.get(blk);
    }
    
    private Buffer chooseUnpinnedBuffer() {
@@ -134,4 +180,33 @@ class BasicBufferMgr {
          return buff;
       return null;
    }
+   
+   private Block getExistingBlockForBuffer(Buffer buff) {
+	   
+	   System.out.println("DEBUG:  getExistingBlockForBuffer");
+	   Set<Entry<Block, Buffer>> entrySet = bufferpoolMap.entrySet();
+	   
+	   //Iterate through the Map to get the  block for buffer
+		for (Entry<Block, Buffer> entry : entrySet) {
+			
+			//if buffer matches, return the corresponding block
+			if(entry.getValue().equals(buff)) {
+				return entry.getKey();
+			}
+			
+		}
+	   System.out.println("DEBUG:  Buffer not in Map - Unallocated");
+	   return null;
+   }
+   
+   //Update the map by removing the old mapping and inserting new mapping
+   private void updateMap(Block oldBlock) {
+	   
+	   System.out.println("DEBUG:  updateMap");
+	   Buffer buffer = bufferpoolMap.remove(oldBlock);
+	   Block newBlock = buffer.block();
+	   
+	   bufferpoolMap.put(newBlock, buffer);   
+   }
+   
 }
