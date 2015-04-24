@@ -1,7 +1,27 @@
-# keep these folders away
-# /target
-# /.settings
-
-# keep these files away (please build them yourself)
+*target*
+*.jar
+*.war
+*.ear
 *.class
-# .classpath
+
+# eclipse specific git ignore
+*.pydevproject
+.project
+.metadata
+bin/**
+tmp/**
+tmp/**/*
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.classpath
+.settings/
+.loadpath
+
+# External tool builders
+.externalToolBuilders/
+
+# Locally stored "Eclipse launch configurations"
+*.launch
