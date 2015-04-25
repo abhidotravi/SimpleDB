@@ -3,6 +3,7 @@ package simpledb.file;
 import simpledb.server.SimpleDB;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.util.Date;
 
 /**
  * The contents of a disk block in memory.
@@ -155,5 +156,96 @@ public class Page {
       byte[] byteval = val.getBytes();
       contents.putInt(byteval.length);
       contents.put(byteval);
+   }
+      /**
+    * Returns the short value at the specified offset of the page.
+    * If a short was not stored at that location,
+    * the behavior of the method is unpredictable.
+    * @param offset the byte offset within the page
+    * @return the short value at that offset
+    */
+   public synchronized short getShort(int offset) {
+	  contents.position(offset);
+	  return contents.getShort();
+   }
+
+   /**
+    * Writes a short to the specified offset on the page.
+    * @param offset the byte offset within the page
+    * @param val the short to be written to the page
+    */
+   public synchronized void setShort(int offset, short val) {
+	  contents.position(offset);
+	  contents.putShort(val);
+   }
+   
+   /**
+    * Returns the boolean value at the specified offset of the page.
+    * If a boolean was not stored at that location,
+    * the behavior of the method is unpredictable.
+    * @param offset the byte offset within the page
+    * @return the boolean value at that offset
+    */
+   public synchronized boolean getBoolean(int offset) {
+	  contents.position(offset);
+	  return contents.getInt()==1;
+   }
+   
+   /**
+    * Writes a boolean to the specified offset on the page.
+    * @param offset the byte offset within the page
+    * @param val the boolean to be written to the page
+    */
+   public synchronized void setBoolean(int offset, boolean val) {
+	  contents.position(offset);
+	  contents.putInt(val?1:0);
+   }
+   
+   /**
+    * Returns the byte array value at the specified offset of the page.
+    * If a byte array was not stored at that location,
+    * the behavior of the method is unpredictable.
+    * @param offset the byte offset within the page
+    * @return the byte array value at that offset
+    */
+   public synchronized byte[] getBytes(int offset) {
+	  contents.position(offset);
+	  int len = contents.getInt();
+	  byte[] byteval = new byte[len];
+	  contents.get(byteval);
+	  return byteval;
+   }
+   
+   /**
+    * Writes a byte array to the specified offset on the page.
+    * @param offset the byte offset within the page
+    * @param val the byte array to be written to the page
+    */
+   public synchronized void setBytes(int offset, byte[] val) {
+	  contents.position(offset);
+	  contents.putInt(val.length);
+	  contents.put(val);
+   }
+   
+   /**
+    * Returns the date value at the specified offset of the page.
+    * If a date was not stored at that location,
+    * the behavior of the method is unpredictable.
+    * @param offset the byte offset within the page
+    * @return the date value at that offset
+    */
+   public synchronized Date getDate(int offset) {
+	  contents.position(offset);
+	  return new Date(contents.getLong());
+   }
+   
+   /**
+    * Writes a date to the specified offset on the page.
+    * @param offset the byte offset within the page
+    * @param val the date to be written to the page
+    */
+   public synchronized void setDate(int offset, Date val) {
+	  contents.position(offset);
+	  contents.putLong(val.getTime());
    }
 }
