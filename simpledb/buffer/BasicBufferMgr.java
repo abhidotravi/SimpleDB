@@ -18,6 +18,7 @@ class BasicBufferMgr {
    private Buffer[] bufferpool;	//A pool of Unallocated buffers
    
    //Map of allocated buffers, keyed on the blocks they contain
+   //This maps a block to a buffer. Contains only the allocated buffers
    private Map<Block,Buffer> bufferpoolMap;
    private int numAvailable;
    
@@ -36,14 +37,14 @@ class BasicBufferMgr {
     */
    BasicBufferMgr(int numbuffs) {
       bufferpool = new Buffer[numbuffs];
+      
       //Initialize the Map
       bufferpoolMap = new HashMap<Block,Buffer>();
       
+      //Initialize the array of buffers
       numAvailable = numbuffs;
-      for (int i=0; i<numbuffs; i++) {
+      for (int i=0; i<numbuffs; i++)
     	  bufferpool[i] = new Buffer();
-      }
-         
    }
    
    /**
@@ -51,18 +52,11 @@ class BasicBufferMgr {
     * @param txnum the transaction's id number
     */
    synchronized void flushAll(int txnum) {
-      
-	   /*for (Buffer buff : bufferpool)
-         if (buff.isModifiedBy(txnum))
-         buff.flush();*/
-      
-	   //Flush all allocated buffers. Hence iterate through values in map.
-      for(Buffer buff : bufferpoolMap.values()) {
-    	  if (buff.isModifiedBy(txnum)) {
-    		  System.out.println("DEBUG: Flushing Buffer with block: "+buff.block());
-    		  buff.flush();
-    	  }
-    	        
+	   //Flush buffers modified by a particular transaction
+	   //Iterate through values in map.
+	   for(Buffer buff : bufferpoolMap.values()) {
+		   if (buff.isModifiedBy(txnum))
+			   buff.flush();
       }
    }
    
@@ -76,8 +70,6 @@ class BasicBufferMgr {
     * @return the pinned buffer
     */
    synchronized Buffer pin(Block blk) {
-	  
-	  System.out.println("DEBUG: BasicBufferManager - pin");
       Buffer buff = findExistingBuffer(blk);
       if (buff == null) {
          buff = chooseUnpinnedBuffer();
@@ -85,14 +77,14 @@ class BasicBufferMgr {
             return null;
          buff.assignToBlock(blk);
          
-         //Get currently assigned block, null if unallocated
+         //Get the block that is currently assigned to buff, null if unallocated
          Block oldBlock = getExistingBlockForBuffer(buff);
          
          if(oldBlock == null) {
-        	 //If unallocated allocate now
+        	 //If buffer is unallocated, add a mapping
         	 bufferpoolMap.put(blk, buff);
          } else {
-        	 //Update the map with new mapping
+        	 //If buffer is already allocated, Update the mapping
         	 updateMap(oldBlock);
          }
       }
@@ -113,24 +105,21 @@ class BasicBufferMgr {
     * @return the pinned buffer
     */
    synchronized Buffer pinNew(String filename, PageFormatter fmtr) {
-	   
-	  System.out.println("DEBUG: BasicBufferManager - pinNew");
       Buffer buff = chooseUnpinnedBuffer();
       if (buff == null)
          return null;
       buff.assignToNew(filename, fmtr);
       
-      //Get currently assigned block, null if unallocated
+      //Get the block that is currently assigned to buff, null if unallocated
       Block oldBlock = getExistingBlockForBuffer(buff);
       
       if(oldBlock == null) {
-     	 //If buffer unallocated, allocate now
+     	 //If buffer is unallocated, add a mapping
      	 bufferpoolMap.put(buff.block(), buff);
       } else {
-     	 //Update the map with new mapping
+     	 //If buffer is already allocated, Update the mapping
      	 updateMap(oldBlock);
       }
-   
       numAvailable--;
       buff.pin();
       return buff;
@@ -155,21 +144,7 @@ class BasicBufferMgr {
    }
    
    private Buffer findExistingBuffer(Block blk) {
-      /*for (Buffer buff : bufferpool) {
-         Block b = buff.block();
-         if (b != null && b.equals(blk))
-            return buff;
-      }
-      return null;
-      */
-
-	   try {
-		   System.out.println("DEBUG: FindExistingBuffer value "+bufferpoolMap.get(blk));
-	   }catch(NullPointerException e) {
-		   System.out.println("DEBUG: FindExistingBuffer value is null"); 
-	   }
-	   
-	   //Return the buffer for the block if mapping exists
+	   //Return the buffer for the block, if mapping exists
 	   //Else return null
 	   return bufferpoolMap.get(blk);
    }
@@ -182,31 +157,28 @@ class BasicBufferMgr {
    }
    
    private Block getExistingBlockForBuffer(Buffer buff) {
-	   
-	   System.out.println("DEBUG:  getExistingBlockForBuffer");
+	   //Store all the key value pairs from the mapping as a set
 	   Set<Entry<Block, Buffer>> entrySet = bufferpoolMap.entrySet();
 	   
 	   //Iterate through the Map to get the  block for buffer
 		for (Entry<Block, Buffer> entry : entrySet) {
-			
 			//if buffer matches, return the corresponding block
-			if(entry.getValue().equals(buff)) {
+			if(entry.getValue().equals(buff))
 				return entry.getKey();
-			}
-			
 		}
-	   System.out.println("DEBUG:  Buffer not in Map - Unallocated");
+	   //If the buffer is not allocated and does not contain any block, return null
 	   return null;
    }
    
-   //Update the map by removing the old mapping and inserting new mapping
+   //Update the map by changing the key from old block to new block
    private void updateMap(Block oldBlock) {
-	   
-	   System.out.println("DEBUG:  updateMap");
+	   //Remove the block - buffer mapping for old block
 	   Buffer buffer = bufferpoolMap.remove(oldBlock);
+	   
+	   //Get the new block pinned to the buffer
 	   Block newBlock = buffer.block();
 	   
+	   //Add the new block - buffer mapping
 	   bufferpoolMap.put(newBlock, buffer);   
    }
-   
 }
