@@ -157,7 +157,13 @@ public class Page {
       contents.putInt(byteval.length);
       contents.put(byteval);
    }
-      /**
+   
+   /*  ------------------   The following methods were added   ------------------------ */
+   /*  The methods were implemented in a similar manner as getString() and setString()  */ 
+   /*  Similar to getString(), it is assumed that a value has been set at a particular
+    *  offset before we get it from that offset   	       ------------------------ */
+   
+   /**
     * Returns the short value at the specified offset of the page.
     * If a short was not stored at that location,
     * the behavior of the method is unpredictable.
@@ -165,7 +171,9 @@ public class Page {
     * @return the short value at that offset
     */
    public synchronized short getShort(int offset) {
+	  // Set the position of contents to the offset passed 
 	  contents.position(offset);
+	  // Get the short value present at the offset
 	  return contents.getShort();
    }
 
@@ -175,7 +183,9 @@ public class Page {
     * @param val the short to be written to the page
     */
    public synchronized void setShort(int offset, short val) {
+	  // Set the position of contents to the offset passed  
 	  contents.position(offset);
+	  // Put the short value in contents
 	  contents.putShort(val);
    }
    
@@ -187,7 +197,9 @@ public class Page {
     * @return the boolean value at that offset
     */
    public synchronized boolean getBoolean(int offset) {
+	  // Set the position of contents to the offset passed 
 	  contents.position(offset);
+	  // 1 represents true, if 1 was set return true else false
 	  return contents.getInt()==1;
    }
    
@@ -197,7 +209,10 @@ public class Page {
     * @param val the boolean to be written to the page
     */
    public synchronized void setBoolean(int offset, boolean val) {
+	  // Set the position of contents to the offset passed
 	  contents.position(offset);
+	  // Set 1 if the value passed is true or else set 0
+	  // This is done since we cannot directly put boolean values in contents
 	  contents.putInt(val?1:0);
    }
    
@@ -209,9 +224,13 @@ public class Page {
     * @return the byte array value at that offset
     */
    public synchronized byte[] getBytes(int offset) {
+	  // Set the position of contents to the offset passed  
 	  contents.position(offset);
+	  // Get the integer value which represents the length of the byte array
 	  int len = contents.getInt();
+	  // Create the byte array
 	  byte[] byteval = new byte[len];
+	  // Set the created byte array with the value obtained from contents
 	  contents.get(byteval);
 	  return byteval;
    }
@@ -222,8 +241,11 @@ public class Page {
     * @param val the byte array to be written to the page
     */
    public synchronized void setBytes(int offset, byte[] val) {
+	  // Set the position of contents to the offset passed 
 	  contents.position(offset);
+	  // Put  the length of the byte array
 	  contents.putInt(val.length);
+	  // Put the byte array
 	  contents.put(val);
    }
    
@@ -235,7 +257,9 @@ public class Page {
     * @return the date value at that offset
     */
    public synchronized Date getDate(int offset) {
+	  // Set the position of contents to the offset passed 
 	  contents.position(offset);
+	  // Read the contents which is stored as a long number of milliseconds and convert to date 
 	  return new Date(contents.getLong());
    }
    
@@ -245,7 +269,10 @@ public class Page {
     * @param val the date to be written to the page
     */
    public synchronized void setDate(int offset, Date val) {
+	  // Set the position of contents to the offset passed 
 	  contents.position(offset);
+	  // The getTime() returns the number of milliseconds since January 1, 1970, 00:00:00 GMT 
+	  // represented by the Date object and this value is put in contents
 	  contents.putLong(val.getTime());
    }
 }
